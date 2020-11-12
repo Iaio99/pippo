@@ -8,23 +8,25 @@
 #include <unistd.h>
 
 /*
-#include <svn.h>
-#include <git.h>
-#include <aur.h>
-*/
-
+#include "aur.h"
+#include "compile.h"
+#include "git.h"*/
 #include "options.h"
+//#include "svn.h"
+
 
 int err;
 char *path = NULL;
 
+
 static void usage(char *argv[]) {
 	printf("%s <option> [package]\n\n", argv[0]);
-	printf("\t-a, --aur: Specifies AUR as repository");
-	printf("\t-g <user>, --git <user>: Specifies the user repository on GitHub");
-	printf("\t-s <user>, --svn <user>: Same as git, but using svn for the download");
-	printf("\t-p <path>, --path <path>: Specifies the path where download the package");
+	printf("\t-a, --aur: Specifies AUR as repository\n");
+	printf("\t-g <user>, --git <user>: Specifies the user repository on GitHub\n");
+	printf("\t-s <user>, --svn <user>: Same as git, but using svn for the download\n");
+	printf("\t-p <path>, --path <path>: Specifies the path where download the package\n");
 }
+
 
 static bool parse_commands(int argc, char *argv[]) {
 	if (argc < 3) {
@@ -61,19 +63,24 @@ static bool parse_commands(int argc, char *argv[]) {
 	return true;
 }
 
+
 int main(int argc, char *argv[]) {
+	if (!parse_commands(argc, argv)) {
+		exit(-1);
+	}
+
 	if (path == NULL) {
+		path = (char *)realloc(path, strlen(getenv("HOME") + 7));
 		path = strcat(strcat(path, getenv("HOME")), "/pippo\0");
-		if ((err = mkdir(path, 0755)))	{
+		
+		if ((err = mkdir(path, 0755)) != EEXIST)	{
+			fprintf(stderr, "Something goes wrong\n");
+			fprintf(stderr, "%s\n", strerror(err));
 		}
 	}
 	
 	if ((err = chdir(path))) {
 		fprintf(stderr, "The path specified doesn't exists\n");
-		exit(-1);
-	}
-
-	if (!parse_commands(argc, argv)) {
 		exit(-1);
 	}
 
