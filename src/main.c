@@ -7,17 +7,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-/*
-#include "aur.h"
-#include "compile.h"
-#include "git.h"*/
+//#include "compile.h"
 #include "options.h"
-//#include "svn.h"
+#include "path.h"
+//#include "repo.h"
 
-
-int err;
 char *path = NULL;
-
 
 static void usage(char *argv[]) {
 	printf("%s <option> [package]\n\n", argv[0]);
@@ -37,8 +32,16 @@ static bool parse_commands(int argc, char *argv[]) {
 	int c;
 	int option_index;
 
-	while ((c = getopt_long(argc, argv, "g:m:a", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "p:a:g:s", long_options, &option_index)) != -1) {
 		switch (c) {
+			case 'p':
+				path = optarg;
+
+				if (!exists(path)) {
+					fprintf(stderr, "The path specified doesn't exists\n");
+					exit(-1);
+				}			
+			
 			case 'a':
 				break;
 			
@@ -46,10 +49,6 @@ static bool parse_commands(int argc, char *argv[]) {
 				break;
 			 
 			case 's':
-				break;
-			
-			case 'p':
-				path = optarg;
 				break;
 			
 			case 0:
@@ -65,22 +64,15 @@ static bool parse_commands(int argc, char *argv[]) {
 
 
 int main(int argc, char *argv[]) {
-	if (!parse_commands(argc, argv)) {
-		exit(-1);
-	}
-
 	if (path == NULL) {
-		path = (char *)realloc(path, strlen(getenv("HOME") + 7));
-		path = strcat(strcat(path, getenv("HOME")), "/pippo\0");
+		chdir(getenv("HOME"));
 		
-		if ((err = mkdir(path, 0755)) != EEXIST)	{
-			fprintf(stderr, "Something goes wrong\n");
-			fprintf(stderr, "%s\n", strerror(err));
+		if (!exists("pippo")) {
+			mkdir("pippo", 0755);
 		}
 	}
-	
-	if ((err = chdir(path))) {
-		fprintf(stderr, "The path specified doesn't exists\n");
+
+	if (!parse_commands(argc, argv)) {
 		exit(-1);
 	}
 
